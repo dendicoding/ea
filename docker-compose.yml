@@ -24,13 +24,14 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
-    env_file:
-      - .env
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=flask_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - .:/app
 
 volumes:
   postgres_data:
