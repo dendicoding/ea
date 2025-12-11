@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link href="../src/output.css" rel="stylesheet">
+</head>
+<body>
+    
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+
+    <!-- CSS Tailwind compilato -->
+    <link href="src/output.css" rel="stylesheet">
+</head>
+
+<body class="bg-white">
+
+    <!-- Qui verrà caricata la navbar -->
+    <div id="navbar"></div>
+
+    <!-- Qui verrà caricata la hero -->
+    <div id="hero"></div>
+
+    <script>
+        // Carico NAVBAR
+        fetch("navbar.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("navbar").innerHTML = data;
+            });
+
+        // Carico HERO
+        fetch("hero.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("hero").innerHTML = data;
+            });
+    </script>
+
+</body>
+</html>
+
+
+</body>
+</html>
