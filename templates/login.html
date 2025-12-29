@@ -7,66 +7,66 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 </head>
 <body class="bg-gray-100">
-   <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-  <div class="col-md-6 col-lg-4">
+    <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="col-md-6 col-lg-4">
+            <form id="loginForm" class="p-4 border rounded shadow-sm bg-white">
+                <!-- TITOLI -->
+                <h2 class="text-center mb-2">Welcome Back</h2>
+                <p class="text-center text-muted mb-4">Sign in to your account</p>
 
-    <form class="p-4 border rounded shadow-sm bg-white">
+                <!-- ERRORE -->
+                <div id="error" class="alert alert-danger d-none"></div>
+                <div id="success" class="alert alert-success d-none"></div>
 
-      <div class="mb-3">
-        <label for="inputEmail3" class="form-label">Email</label>
-        <input type="email" class="form-control" id="inputEmail3">
-      </div>
+                <!-- USERNAME -->
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+                </div>
 
-      <div class="mb-3">
-        <label for="inputPassword3" class="form-label">Password</label>
-        <input type="password" class="form-control" id="inputPassword3">
-      </div>
+                <!-- PASSWORD -->
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                </div>
 
-      <fieldset class="mb-3">
-        <legend class="col-form-label pt-0 h6">Radios</legend>
+                <!-- REMEMBER ME -->
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">
+                        Remember me
+                    </label>
+                </div>
 
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios1" checked>
-          <label class="form-check-label" for="gridRadios1">
-            First radio
-          </label>
+                <!-- BOTTONE -->
+                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+
+                <!-- LINK PER SIGNUP -->
+                <p class="text-center mt-3">
+                    Don't have an account?
+                    <a href="/signup">Sign up</a>
+                </p>
+                
+                <p class="text-center">
+                    <a href="/">Back to home</a>
+                </p>
+            </form>
         </div>
-
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios2">
-          <label class="form-check-label" for="gridRadios2">
-            Second radio
-          </label>
-        </div>
-
-        <div class="form-check disabled">
-          <input class="form-check-input" type="radio" disabled>
-          <label class="form-check-label">
-            Third disabled radio
-          </label>
-        </div>
-      </fieldset>
-
-      <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" id="gridCheck1">
-        <label class="form-check-label" for="gridCheck1">
-          Example checkbox
-        </label>
-      </div>
-
-      <button type="submit" class="btn btn-primary w-100">Sign in</button>
-
-    </form>
-
-  </div>
-</div>
-
+    </div>
 
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            
+            const errorDiv = document.getElementById('error');
+            const successDiv = document.getElementById('success');
+            
+            // Reset messaggi
+            errorDiv.classList.add('d-none');
+            successDiv.classList.add('d-none');
             
             try {
                 const response = await fetch('/login', {
@@ -76,13 +76,33 @@
                 });
                 
                 const data = await response.json();
+                
                 if (response.ok) {
-                    window.location.href = '/';
+                    successDiv.textContent = data.message + ' - Redirecting...';
+                    successDiv.classList.remove('d-none');
+                    
+                    // Salva username in localStorage se remember me è selezionato
+                    if (document.getElementById('rememberMe').checked) {
+                        localStorage.setItem('username', username);
+                    }
+                    
+                    setTimeout(() => window.location.href = '/dashboard', 1500);
                 } else {
-                    document.getElementById('error').textContent = data.error;
+                    errorDiv.textContent = data.error;
+                    errorDiv.classList.remove('d-none');
                 }
             } catch (err) {
-                document.getElementById('error').textContent = 'Errore di connessione';
+                errorDiv.textContent = 'Connection error';
+                errorDiv.classList.remove('d-none');
+            }
+        });
+        
+        // Carica username salvato
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUsername = localStorage.getItem('username');
+            if (savedUsername) {
+                document.getElementById('username').value = savedUsername;
+                document.getElementById('rememberMe').checked = true;
             }
         });
     </script>

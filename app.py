@@ -24,10 +24,18 @@ def home():
     return render_template('search.html')
 
 
+@app.route('/calendar')
+def calendar():
+    return render_template('calendar.html')
+
+
 # ===== ROUTES AUTENTICAZIONE =====
 
-app.route('/signup', methods=['POST'])
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if request.method == 'GET':
+        return render_template('signup.html')
+    
     data = request.json
     username = data.get('username')
     email = data.get('email')
@@ -54,8 +62,11 @@ def signup():
         }), 201
     return jsonify({'error' : 'Errore nella registrazione'}), 500
 
-@app.route('/login', methods=['POST'])
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'GET':
+        return render_template('login.html')
     data = request.json
     username = data.get('username') 
     password = data.get('password')
@@ -105,6 +116,17 @@ def users():
             return jsonify(user), 201
         return jsonify({'error': 'Errore nella creazione dell\'utente'}), 500
 
+@app.route('/dashboard')
+def dashboard():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    
+    user = db.get_user_by_id(user_id)
+    if not user:
+        return redirect(url_for('login'))
+    
+    return render_template('calendar.html')
 
 @app.route('/users/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
 def user_detail(user_id):

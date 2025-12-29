@@ -29,6 +29,7 @@ services:
       - POSTGRES_DB=flask_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - SECRET_KEY=your-super-secret-key-change-this-in-production-12345
     depends_on:
       db:
         condition: service_healthy

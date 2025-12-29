@@ -62,14 +62,14 @@ def init_db():
 # ===== QUERY UTENTI =====
 
 def create_user(username, email):
-    """Crea un nuovo utente"""
+    """Crea un nuovo utente (senza password - per compatibilità)"""
     conn = get_connection()
     if conn:
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute(
-                "INSERT INTO users (username, email) VALUES (%s, %s) RETURNING *",
-                (username, email)
+                "INSERT INTO users (username, email, password) VALUES (%s, %s, %s) RETURNING *",
+                (username, email, 'default_hash')
             )
             user = cursor.fetchone()
             conn.commit()
@@ -87,7 +87,7 @@ def create_user_with_password(username, email, password_hash):
     conn = get_connection()
     if conn:
         try:
-            cursor = conn.curso(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute(
                 "INSERT INTO users (username, email, password) VALUES (%s, %s, %s) RETURNING *",
                 (username, email, password_hash)
@@ -96,7 +96,7 @@ def create_user_with_password(username, email, password_hash):
             conn.commit()
             return dict(user)
         except Exception as e:
-            print(f"Errore nella crezione utente: {e}")
+            print(f"Errore nella creazione utente: {e}")
             conn.rollback()
             return None
         finally:
@@ -298,3 +298,18 @@ def delete_post(post_id):
             cursor.close()
             conn.close()
 
+def get_user_by_username(username):
+    """Ottiene un utente per username"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            return dict(user) if user else None
+        except Exception as e:
+            print(f"Errore nel recupero dell'utente: {e}")
+            return None
+        finally:
+            cursor.close()
+            conn.close()
