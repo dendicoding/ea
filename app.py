@@ -1,8 +1,8 @@
-from flask import Flask, jsonify, request, session, render_template
+from flask import Flask, jsonify, request, session, render_template, redirect, url_for
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 import time
-import database as db
+import backend.database as db
 import os 
 
 load_dotenv()
@@ -21,13 +21,7 @@ def before_first_request():
 
 @app.route('/')
 def home():
-    return jsonify({
-        'message': 'Benvenuto nella Mini Flask App!',
-        'endpoints': {
-            'users': '/users',
-            'posts': '/posts'
-        }
-    })
+    return render_template('search.html')
 
 
 # ===== ROUTES AUTENTICAZIONE =====
