@@ -1,99 +1,65 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Search Posts</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-</head>
-<body>
-    <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="/">
-      <img src="" alt="Logo" width="34" height="34" class="me-2 rounded">
-      <strong>My App</strong>
-    </a>
+{% extends "base.html" %}
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+{% block title %}Home - Search Posts{% endblock %}
 
-    <div class="collapse navbar-collapse" id="mainNav">
-      <ul class="navbar-nav me-auto mb-2 mb-md-0">
-        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="/calendar">Calendario</a></li>
-        <li class="nav-item"><a class="nav-link active" aria-current="page" href="/search">Cerca</a></li>
-        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
-      </ul>
-
-      <form class="d-flex me-3" role="search" onsubmit="event.preventDefault(); document.getElementById('searchInput').focus();">
-        <input id="searchInput" class="form-control form-control-sm" type="search" placeholder="Cerca...">
-      </form>
-
-      <div class="d-flex">
-        <a href="/signup" class="btn btn-outline-primary btn-sm me-2">Registrati</a>
-        <a href="/login" class="btn btn-primary btn-sm">Accedi</a>
-      </div>
-    </div>
-  </div>
-</nav>
-
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">🔍 Search Posts</h1>
-        
-        <div class="row justify-content-center mb-4">
-            <div class="col-md-8">
-                <input type="text" id="searchInput" class="form-control" placeholder="Search posts by title or content...">
-            </div>
-        </div>
-
-        <div class="row justify-content-center">
-            <div class="col-md-10">
-                <div id="results"></div>
-            </div>
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">🔍 Search Posts</h1>
+    
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search posts by title or content...">
         </div>
     </div>
 
-    <script>
-        const searchInput = document.getElementById('searchInput');
-        const results = document.getElementById('results');
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div id="results"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-        // Carica posts all'avvio
-        loadPosts();
+{% block extra_js %}
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const results = document.getElementById('results');
 
-        searchInput.addEventListener('input', (e) => {
-            loadPosts(e.target.value);
-        });
+    // Carica posts all'avvio
+    loadPosts();
 
-        async function loadPosts(query = '') {
-            try {
-                const response = await fetch('/posts');
-                const posts = await response.json();
-                
-                const filtered = posts.filter(post => 
-                    post.title.toLowerCase().includes(query.toLowerCase()) ||
-                    (post.content && post.content.toLowerCase().includes(query.toLowerCase()))
-                );
+    searchInput.addEventListener('input', (e) => {
+        loadPosts(e.target.value);
+    });
 
-                if (filtered.length > 0) {
-                    results.innerHTML = filtered.map(post => `
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">${post.title}</h5>
-                                <p class="card-text">${post.content || 'No content'}</p>
-                                <p class="card-text">
-                                    <small class="text-muted">By User #${post.user_id} - ${new Date(post.created_at).toLocaleDateString()}</small>
-                                </p>
-                            </div>
+    async function loadPosts(query = '') {
+        try {
+            const response = await fetch('/posts');
+            const posts = await response.json();
+            
+            const filtered = posts.filter(post => 
+                post.title.toLowerCase().includes(query.toLowerCase()) ||
+                (post.content && post.content.toLowerCase().includes(query.toLowerCase()))
+            );
+
+            if (filtered.length > 0) {
+                results.innerHTML = filtered.map(post => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">${post.title}</h5>
+                            <p class="card-text">${post.content || 'No content'}</p>
+                            <p class="card-text">
+                                <small class="text-muted">By ${post.username || 'User #' + post.user_id} - ${new Date(post.created_at).toLocaleDateString()}</small>
+                            </p>
                         </div>
-                    `).join('');
-                } else {
-                    results.innerHTML = '<div class="alert alert-info">No posts found</div>';
-                }
-            } catch (error) {
-                results.innerHTML = '<div class="alert alert-danger">Error loading posts</div>';
+                    </div>
+                `).join('');
+            } else {
+                results.innerHTML = '<div class="alert alert-info">No posts found</div>';
             }
+        } catch (error) {
+            results.innerHTML = '<div class="alert alert-danger">Error loading posts</div>';
         }
-    </script>
-</body>
-</html>
+    }
+</script>
+{% endblock %}

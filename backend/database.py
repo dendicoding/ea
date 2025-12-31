@@ -49,6 +49,21 @@ def init_db():
                 )
             """)
             
+            # Crea tabella prenotazioni calendario
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS bookings (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    booking_date DATE NOT NULL,
+                    start_time TIME NOT NULL,
+                    end_time TIME NOT NULL,
+                    title VARCHAR(200) NOT NULL,
+                    description TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(booking_date, start_time)
+                )
+            """)
+            
             conn.commit()
             print("Database inizializzato con successo!")
         except Exception as e:
@@ -169,6 +184,27 @@ def update_user(user_id, username=None, email=None):
             print(f"Errore nell'aggiornamento dell'utente: {e}")
             conn.rollback()
             return None
+        finally:
+            cursor.close()
+            conn.close()
+
+
+def update_user_password(user_id, password_hash):
+    """Aggiorna la password di un utente"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE users SET password = %s WHERE id = %s",
+                (password_hash, user_id)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Errore nell'aggiornamento della password: {e}")
+            conn.rollback()
+            return False
         finally:
             cursor.close()
             conn.close()
@@ -310,6 +346,138 @@ def get_user_by_username(username):
         except Exception as e:
             print(f"Errore nel recupero dell'utente: {e}")
             return None
+        finally:
+            cursor.close()
+            conn.close()
+
+
+# ===== QUERY PRENOTAZIONI =====
+
+def create_booking(user_id, booking_date, start_time, end_time, title, description=None):
+    """Crea una nuova prenotazione"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("""
+                INSERT INTO bookings (user_id, booking_date, start_time, end_time, title, description) 
+                VALUES (%s, %s, %s, %s, %s, %s) 
+                RETURNING *
+            """, (user_id, booking_date, start_time, end_time, title, description))
+            booking = cursor.fetchone()
+            conn.commit()
+            return dict(booking)
+        except Exception as e:
+            print(f"Errore nella creazione della prenotazione: {e}")
+            conn.rollback()
+            return None
+        finally:
+            cursor.close()
+            conn.close()
+
+
+def get_all_bookings():
+    """Ottiene tutte le prenotazioni con info utente"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("""
+                SELECT b.*, u.username, u.email 
+                FROM bookings b 
+                JOIN users u ON b.user_id = u.id 
+                ORDER BY b.booking_date DESC, b.start_time ASC
+            """)
+            bookings = cursor.fetchall()
+            return [dict(booking) for booking in bookings]
+        except Exception as e:
+            print(f"Errore nel recupero delle prenotazioni: {e}")
+            return []
+        finally:
+            cursor.close()
+            conn.close()
+
+
+def get_bookings_by_date_range(start_date, end_date):
+    """Ottiene prenotazioni in un range di date"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("""
+                SELECT b.*, u.username, u.email 
+                FROM bookings b 
+                JOIN users u ON b.user_id = u.id 
+                WHERE b.booking_date BETWEEN %s AND %s
+                ORDER BY b.booking_date ASC, b.start_time ASC
+            """, (start_date, end_date))
+            bookings = cursor.fetchall()
+            return [dict(booking) for booking in bookings]
+        except Exception as e:
+            print(f"Errore nel recupero delle prenotazioni: {e}")
+            return []
+        finally:
+            cursor.close()
+            conn.close()
+
+
+def get_bookings_by_user(user_id):
+    """Ottiene tutte le prenotazioni di un utente"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("""
+                SELECT * FROM bookings 
+                WHERE user_id = %s 
+                ORDER BY booking_date DESC, start_time ASC
+            """, (user_id,))
+            bookings = cursor.fetchall()
+            return [dict(booking) for booking in bookings]
+        except Exception as e:
+            print(f"Errore nel recupero delle prenotazioni utente: {e}")
+            return []
+        finally:
+            cursor.close()
+            conn.close()
+
+
+def delete_booking(booking_id, user_id):
+    """Elimina una prenotazione (solo il proprietario)"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM bookings WHERE id = %s AND user_id = %s", 
+                (booking_id, user_id)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Errore nell'eliminazione della prenotazione: {e}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close()
+
+
+def check_slot_available(booking_date, start_time):
+    """Verifica se uno slot è disponibile"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT COUNT(*) FROM bookings 
+                WHERE booking_date = %s AND start_time = %s
+            """, (booking_date, start_time))
+            count = cursor.fetchone()[0]
+            return count == 0
+        except Exception as e:
+            print(f"Errore nella verifica disponibilità: {e}")
+            return False
         finally:
             cursor.close()
             conn.close()

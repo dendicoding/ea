@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import time
 import backend.database as db
 import os 
+import datetime
 
 load_dotenv()
 
@@ -21,18 +22,41 @@ def before_first_request():
 
 @app.route('/')
 def home():
-    return render_template('search.html')
+    # Se l'utente è loggato, vai al calendario
+    if session.get('user_id'):
+        return redirect(url_for('calendar'))
+    # Altrimenti vai al login
+    return redirect(url_for('login'))
 
 
 @app.route('/calendar')
 def calendar():
+    # Proteggi la route: solo utenti loggati
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    
     return render_template('calendar.html')
+
+
+@app.route('/search')
+def search():
+    # Proteggi la route: solo utenti loggati
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    
+    return render_template('search.html')
 
 
 # ===== ROUTES AUTENTICAZIONE =====
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    # Se già loggato, vai al calendario
+    if session.get('user_id'):
+        return redirect(url_for('calendar'))
+    
     if request.method == 'GET':
         return render_template('signup.html')
     
@@ -42,7 +66,7 @@ def signup():
     password = data.get('password')
 
     if not username or not email or not password:
-        return jsonify({'error': 'Username, email e spassword sono richieste!'}), 400
+        return jsonify({'error': 'Username, email e password sono richieste!'}), 400
 
     # Controllo se l'utente già esiste
     existing_user = db.get_user_by_username(username)
@@ -65,8 +89,13 @@ def signup():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Se già loggato, vai al calendario
+    if session.get('user_id'):
+        return redirect(url_for('calendar'))
+    
     if request.method == 'GET':
         return render_template('login.html')
+    
     data = request.json
     username = data.get('username') 
     password = data.get('password')
@@ -126,7 +155,53 @@ def dashboard():
     if not user:
         return redirect(url_for('login'))
     
-    return render_template('calendar.html')
+    return render_template('dashboard.html', user=user)
+
+
+@app.route('/profile')
+def profile():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    oggi = datetime.datetime.now()
+    user = db.get_user_by_id(user_id)
+    if not user:
+        return redirect(url_for('login'))
+    
+    return render_template('profile.html', user=user, oggi=oggi)
+
+
+@app.route('/users/<int:user_id>/change-password', methods=['POST'])
+def change_password(user_id):
+    # Verifica che l'utente stia modificando la propria password
+    if session.get('user_id') != user_id:
+        return jsonify({'error': 'Non autorizzato'}), 403
+    
+    data = request.json
+    current_password = data.get('currentPassword')
+    new_password = data.get('newPassword')
+    
+    if not current_password or not new_password:
+        return jsonify({'error': 'Password attuale e nuova password sono richieste'}), 400
+    
+    # Verifica password attuale
+    user = db.get_user_by_id(user_id)
+    if not user or not check_password_hash(user['password'], current_password):
+        return jsonify({'error': 'Password attuale non corretta'}), 401
+    
+    # Aggiorna password
+    new_password_hash = generate_password_hash(new_password)
+    success = db.update_user_password(user_id, new_password_hash)
+    
+    if success:
+        return jsonify({'message': 'Password aggiornata con successo'}), 200
+    return jsonify({'error': 'Errore nell\'aggiornamento della password'}), 500
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
 
 @app.route('/users/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
 def user_detail(user_id):
@@ -193,6 +268,99 @@ def post_detail(post_id):
 def user_posts(user_id):
     posts = db.get_posts_by_user(user_id)
     return jsonify(posts)
+
+
+# ===== ROUTES PRENOTAZIONI =====
+
+@app.route('/bookings', methods=['GET', 'POST'])
+def bookings():
+    if request.method == 'GET':
+        # Ottieni tutte le prenotazioni o filtra per date
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        if start_date and end_date:
+            bookings = db.get_bookings_by_date_range(start_date, end_date)
+        else:
+            bookings = db.get_all_bookings()
+        
+        # Serializza le date per JSON
+        for booking in bookings:
+            if booking.get('booking_date'):
+                booking['booking_date'] = booking['booking_date'].isoformat()
+            if booking.get('start_time'):
+                booking['start_time'] = str(booking['start_time'])
+            if booking.get('end_time'):
+                booking['end_time'] = str(booking['end_time'])
+            if booking.get('created_at'):
+                booking['created_at'] = booking['created_at'].isoformat()
+        
+        return jsonify(bookings)
+    
+    elif request.method == 'POST':
+        # Solo utenti autenticati possono prenotare
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Devi essere autenticato per prenotare'}), 401
+        
+        data = request.json
+        booking_date = data.get('booking_date')
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+        title = data.get('title')
+        description = data.get('description')
+        
+        if not booking_date or not start_time or not title:
+            return jsonify({'error': 'Data, ora inizio e titolo sono richiesti'}), 400
+        
+        # Verifica disponibilità
+        if not db.check_slot_available(booking_date, start_time):
+            return jsonify({'error': 'Questo slot è già occupato'}), 409
+        
+        # Crea prenotazione
+        booking = db.create_booking(user_id, booking_date, start_time, end_time, title, description)
+        if booking:
+            # Serializza le date per JSON
+            if booking.get('booking_date'):
+                booking['booking_date'] = booking['booking_date'].isoformat()
+            if booking.get('start_time'):
+                booking['start_time'] = str(booking['start_time'])
+            if booking.get('end_time'):
+                booking['end_time'] = str(booking['end_time'])
+            if booking.get('created_at'):
+                booking['created_at'] = booking['created_at'].isoformat()
+            
+            return jsonify(booking), 201
+        return jsonify({'error': 'Errore nella creazione della prenotazione'}), 500
+
+
+@app.route('/bookings/<int:booking_id>', methods=['DELETE'])
+def delete_booking(booking_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Non autenticato'}), 401
+    
+    if db.delete_booking(booking_id, user_id):
+        return jsonify({'message': 'Prenotazione eliminata con successo'})
+    return jsonify({'error': 'Errore nell\'eliminazione o prenotazione non trovata'}), 500
+
+
+@app.route('/users/<int:user_id>/bookings', methods=['GET'])
+def user_bookings(user_id):
+    bookings = db.get_bookings_by_user(user_id)
+    
+    # Serializza le date per JSON
+    for booking in bookings:
+        if booking.get('booking_date'):
+            booking['booking_date'] = booking['booking_date'].isoformat()
+        if booking.get('start_time'):
+            booking['start_time'] = str(booking['start_time'])
+        if booking.get('end_time'):
+            booking['end_time'] = str(booking['end_time'])
+        if booking.get('created_at'):
+            booking['created_at'] = booking['created_at'].isoformat()
+    
+    return jsonify(bookings)
 
 
 if __name__ == '__main__':

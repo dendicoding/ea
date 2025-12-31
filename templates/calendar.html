@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
+{% extends "base.html" %}
+
+{% block title %}Calendar{% endblock %}
+
+{% block extra_css %}
+<style>
         .calendar-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -128,25 +126,10 @@
             margin-bottom: 10px;
         }
     </style>
-</head>
-<body>
-    <nav class="navbar navbar-dark bg-primary mb-4">
-        <div class="container">
-            <span class="navbar-brand mb-0 h1">📅 My Calendar</span>
-            <div>
-                <a href="/" class="btn btn-outline-light btn-sm me-2">Home</a>
-                {% if session.get('user_id') %}
-                <a href="/dashboard" class="btn btn-outline-light btn-sm me-2">Dashboard</a>
-                <a href="/logout" class="btn btn-light btn-sm">Logout</a>
-                {% else %}
-                <a href="/login" class="btn btn-outline-light btn-sm me-2">Login</a>
-                <a href="/signup" class="btn btn-light btn-sm">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
+{% endblock %}
 
-    <div class="container mb-5">
+{% block content %}
+<div class="container mb-5 mt-4">
         <div class="calendar-container">
             <!-- Header -->
             <div class="calendar-header">
@@ -206,22 +189,26 @@
                         <form id="eventForm">
                             <input type="hidden" id="eventDate">
                             <div class="mb-3">
-                                <label for="eventTitle" class="form-label">Event Title</label>
+                                <label for="eventTitle" class="form-label">Titolo Prenotazione</label>
                                 <input type="text" class="form-control" id="eventTitle" required>
                             </div>
                             <div class="mb-3">
-                                <label for="eventTime" class="form-label">Time</label>
-                                <input type="time" class="form-control" id="eventTime">
+                                <label for="eventTime" class="form-label">Ora Inizio (Slot di 1 ora)</label>
+                                <select class="form-control" id="eventTime" required>
+                                    <option value="">Seleziona un orario...</option>
+                                </select>
+                                <small id="slotStatus" class="form-text"></small>
                             </div>
                             <div class="mb-3">
-                                <label for="eventDescription" class="form-label">Description</label>
+                                <label for="eventDescription" class="form-label">Descrizione</label>
                                 <textarea class="form-control" id="eventDescription" rows="3"></textarea>
                             </div>
+                            <div id="bookingMessage"></div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" id="saveEventBtn">Save Event</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                        <button type="button" class="btn btn-primary" id="saveEventBtn">Prenota Slot</button>
                     </div>
                 </div>
             </div>
@@ -232,14 +219,41 @@
     <script>
         let currentDate = new Date();
         let currentView = 'month';
-        let events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+        let bookings = [];
+        let currentUserId = null;
 
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                            'July', 'August', 'September', 'October', 'November', 'December'];
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+        // Carica utente corrente e prenotazioni
+        loadCurrentUser();
+        loadBookings();
+
         // Initialize
         renderCalendar();
+
+        async function loadCurrentUser() {
+            try {
+                const response = await fetch('/current-user');
+                if (response.ok) {
+                    const user = await response.json();
+                    currentUserId = user.id;
+                }
+            } catch (err) {
+                console.error('Errore caricamento utente:', err);
+            }
+        }
+
+        async function loadBookings() {
+            try {
+                const response = await fetch('/bookings');
+                bookings = await response.json();
+                renderCalendar();
+            } catch (err) {
+                console.error('Errore caricamento prenotazioni:', err);
+            }
+        }
 
         // Event Listeners
         document.getElementById('prevBtn').addEventListener('click', () => {
@@ -369,12 +383,20 @@
             
             dayEl.innerHTML = `<div class="day-number">${day}</div>`;
             
-            // Add events
-            if (events[dateStr]) {
-                events[dateStr].forEach(event => {
+            // Mostra prenotazioni per questo giorno
+            const dayBookings = bookings.filter(b => b.booking_date === dateStr);
+            if (dayBookings.length > 0) {
+                dayBookings.forEach(booking => {
                     const eventEl = document.createElement('div');
                     eventEl.className = 'event-item';
-                    eventEl.textContent = event.time ? `${event.time} ${event.title}` : event.title;
+                    const isMyBooking = booking.user_id === currentUserId;
+                    if (isMyBooking) {
+                        eventEl.style.background = '#28a745'; // Verde per le mie prenotazioni
+                    } else {
+                        eventEl.style.background = '#dc3545'; // Rosso per prenotazioni altri utenti
+                    }
+                    eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}${isMyBooking ? ' (Tu)' : ''}`;
+                    eventEl.title = booking.title;
                     dayEl.appendChild(eventEl);
                 });
             }
@@ -419,11 +441,18 @@
                     </div>
                 `;
 
-                if (events[dateStr]) {
-                    events[dateStr].forEach(event => {
+                const dayBookings = bookings.filter(b => b.booking_date === dateStr);
+                if (dayBookings.length > 0) {
+                    dayBookings.forEach(booking => {
                         const eventEl = document.createElement('div');
                         eventEl.className = 'event-item mb-2';
-                        eventEl.textContent = event.time ? `${event.time} ${event.title}` : event.title;
+                        const isMyBooking = booking.user_id === currentUserId;
+                        if (isMyBooking) {
+                            eventEl.style.background = '#28a745';
+                        } else {
+                            eventEl.style.background = '#dc3545';
+                        }
+                        eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}${isMyBooking ? ' (Tu)' : ''}`;
                         dayCol.appendChild(eventEl);
                     });
                 }
@@ -458,55 +487,105 @@
                 container.appendChild(timeSlot);
             }
 
-            if (events[dateStr]) {
-                events[dateStr].forEach(event => {
-                    if (event.time) {
-                        const hour = parseInt(event.time.split(':')[0]);
-                        const slot = document.getElementById(`slot-${hour}`);
-                        if (slot) {
-                            const eventEl = document.createElement('div');
-                            eventEl.className = 'event-item';
-                            eventEl.textContent = `${event.time} - ${event.title}`;
-                            slot.appendChild(eventEl);
-                        }
+            const dayBookings = bookings.filter(b => b.booking_date === dateStr);
+            dayBookings.forEach(booking => {
+                const hour = parseInt(booking.start_time.split(':')[0]);
+                const slot = document.getElementById(`slot-${hour}`);
+                if (slot) {
+                    const eventEl = document.createElement('div');
+                    eventEl.className = 'event-item';
+                    const isMyBooking = booking.user_id === currentUserId;
+                    if (isMyBooking) {
+                        eventEl.style.background = '#28a745';
+                    } else {
+                        eventEl.style.background = '#dc3545';
                     }
-                });
-            }
+                    eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}: ${booking.title}${isMyBooking ? ' (Tu)' : ''}`;
+                    slot.appendChild(eventEl);
+                }
+            });
         }
 
         function openEventModal(dateStr) {
             document.getElementById('eventDate').value = dateStr;
+            document.getElementById('bookingMessage').innerHTML = '';
+            
+            // Popola gli slot orari (24 ore)
+            const timeSelect = document.getElementById('eventTime');
+            timeSelect.innerHTML = '<option value="">Seleziona un orario...</option>';
+            
+            const dayBookings = bookings.filter(b => b.booking_date === dateStr);
+            const occupiedSlots = new Set(dayBookings.map(b => b.start_time.slice(0,5)));
+            
+            for (let hour = 0; hour < 24; hour++) {
+                const hourStr = String(hour).padStart(2, '0') + ':00';
+                const option = document.createElement('option');
+                option.value = hourStr;
+                
+                if (occupiedSlots.has(hourStr)) {
+                    const booking = dayBookings.find(b => b.start_time.slice(0,5) === hourStr);
+                    option.text = `${hourStr} - OCCUPATO (${booking.username})`;
+                    option.disabled = true;
+                    option.style.color = '#dc3545';
+                } else {
+                    option.text = `${hourStr} - DISPONIBILE`;
+                    option.style.color = '#28a745';
+                }
+                
+                timeSelect.appendChild(option);
+            }
+            
             const modal = new bootstrap.Modal(document.getElementById('eventModal'));
             modal.show();
         }
 
-        function saveEvent() {
+        async function saveEvent() {
             const dateStr = document.getElementById('eventDate').value;
             const title = document.getElementById('eventTitle').value;
-            const time = document.getElementById('eventTime').value;
+            const startTime = document.getElementById('eventTime').value;
             const description = document.getElementById('eventDescription').value;
+            const messageDiv = document.getElementById('bookingMessage');
 
-            if (!title) return;
-
-            if (!events[dateStr]) {
-                events[dateStr] = [];
+            if (!title || !startTime) {
+                messageDiv.innerHTML = '<div class="alert alert-danger">Titolo e orario sono richiesti</div>';
+                return;
             }
 
-            events[dateStr].push({
-                title,
-                time,
-                description,
-                created: new Date().toISOString()
-            });
-
-            localStorage.setItem('calendarEvents', JSON.stringify(events));
-
-            // Reset form
-            document.getElementById('eventForm').reset();
-            bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-
-            renderCalendar();
+            try {
+                const response = await fetch('/bookings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        booking_date: dateStr,
+                        start_time: startTime,
+                        end_time: addHour(startTime),
+                        title: title,
+                        description: description
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.innerHTML = '<div class="alert alert-success">✅ Prenotazione effettuata!</div>';
+                    document.getElementById('eventForm').reset();
+                    
+                    setTimeout(async () => {
+                        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+                        await loadBookings();
+                    }, 1500);
+                } else {
+                    messageDiv.innerHTML = `<div class="alert alert-danger">❌ ${data.error}</div>`;
+                }
+            } catch (err) {
+                messageDiv.innerHTML = '<div class="alert alert-danger">❌ Errore di connessione</div>';
+            }
+        }
+        
+        function addHour(timeStr) {
+            const [hour, minute] = timeStr.split(':');
+            const newHour = (parseInt(hour) + 1) % 24;
+            return `${String(newHour).padStart(2, '0')}:${minute}`;
         }
     </script>
-</body>
-</html>
+{% endblock %}

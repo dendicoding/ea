@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrati</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-</head>
-<body class="bg-gray-100">
+{% extends "base.html" %}
+
+{% block title %}Registrati{% endblock %}
+
+{% block content %}
     <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
         <div class="col-md-6 col-lg-4">
             <form id="signupForm" class="p-4 border rounded shadow-sm bg-white">
@@ -97,7 +93,7 @@
                 if (response.ok) {
                     successDiv.textContent = data.message + ' - Reindirizzamento...';
                     successDiv.classList.remove('d-none');
-                    setTimeout(() => window.location.href = '/', 1500);
+                    setTimeout(() => window.location.href = '/calendar', 1500);
                 } else {
                     errorDiv.textContent = data.error;
                     errorDiv.classList.remove('d-none');
@@ -108,5 +104,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

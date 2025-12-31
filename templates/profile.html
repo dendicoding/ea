@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Profilo - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header Profilo -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">👤 Il Mio Profilo</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" 
+                                 style="width: 100px; height: 100px; font-size: 3rem;">
+                                {{ user.username[0].upper() }}
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <h3>{{ user.username }}</h3>
+                            <p class="text-muted mb-1">
+                                <i class="bi bi-envelope"></i> {{ user.email }}
+                            </p>
+                            <p class="text-muted">
+                                <i class="bi bi-calendar"></i> Membro da: {{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modifica Profilo -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">✏️ Modifica Informazioni</h5>
+                </div>
+                <div class="card-body">
+                    <form id="updateProfileForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" value="{{ user.username }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" value="{{ user.email }}" required>
+                        </div>
+                        <div id="profileMessage"></div>
+                        <button type="submit" class="btn btn-primary">Salva Modifiche</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Cambio Password -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🔒 Cambia Password</h5>
+                </div>
+                <div class="card-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Password Attuale</label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Nuova Password</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Conferma Nuova Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                        <div id="passwordMessage"></div>
+                        <button type="submit" class="btn btn-warning">Cambia Password</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistiche -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Statistiche</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h2 id="totalPosts" class="text-primary">0</h2>
+                                    <p class="text-muted mb-0">Posts Creati</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <h2 id="totalEvents" class="text-success">0</h2>
+                                    <p class="text-muted mb-0">Eventi Calendario</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h2 class="text-info">{{ (oggi - user.created_at).days if user.created_at else 0 }}</h2>
+                                    <p class="text-muted mb-0">Giorni Attivo</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zona Pericolosa -->
+            <div class="card border-danger mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">⚠️ Zona Pericolosa</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Una volta eliminato l'account, non c'è modo di tornare indietro. Procedi con cautela.</p>
+                    <button class="btn btn-danger" onclick="deleteAccount()">Elimina Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const userId = {{ user.id }};
+
+    // Carica statistiche
+    loadStats();
+
+    // Form aggiornamento profilo
+    document.getElementById('updateProfileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const messageDiv = document.getElementById('profileMessage');
+        
+        try {
+            const response = await fetch(`/users/${userId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, email})
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                messageDiv.innerHTML = '<div class="alert alert-success">✅ Profilo aggiornato con successo!</div>';
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                messageDiv.innerHTML = `<div class="alert alert-danger">❌ ${data.error}</div>`;
+            }
+        } catch (err) {
+            messageDiv.innerHTML = '<div class="alert alert-danger">❌ Errore di connessione</div>';
+        }
+    });
+
+    // Form cambio password
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const messageDiv = document.getElementById('passwordMessage');
+        
+        if (newPassword !== confirmPassword) {
+            messageDiv.innerHTML = '<div class="alert alert-danger">❌ Le password non corrispondono</div>';
+            return;
+        }
+        
+        if (newPassword.length < 6) {
+            messageDiv.innerHTML = '<div class="alert alert-danger">❌ La password deve essere di almeno 6 caratteri</div>';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/users/${userId}/change-password`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({currentPassword, newPassword})
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                messageDiv.innerHTML = '<div class="alert alert-success">✅ Password cambiata con successo!</div>';
+                document.getElementById('changePasswordForm').reset();
+            } else {
+                messageDiv.innerHTML = `<div class="alert alert-danger">❌ ${data.error}</div>`;
+            }
+        } catch (err) {
+            messageDiv.innerHTML = '<div class="alert alert-danger">❌ Errore di connessione</div>';
+        }
+    });
+
+    // Carica statistiche
+    async function loadStats() {
+        try {
+            // Conta posts
+            const postsResponse = await fetch(`/users/${userId}/posts`);
+            const posts = await postsResponse.json();
+            document.getElementById('totalPosts').textContent = posts.length;
+            
+            // Conta eventi
+            const events = JSON.parse(localStorage.getItem('calendarEvents') || '{}');
+            const totalEvents = Object.values(events).reduce((sum, arr) => sum + arr.length, 0);
+            document.getElementById('totalEvents').textContent = totalEvents;
+        } catch (err) {
+            console.error('Errore nel caricamento statistiche:', err);
+        }
+    }
+
+    // Elimina account
+    async function deleteAccount() {
+        if (!confirm('⚠️ Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile!')) {
+            return;
+        }
+        
+        if (!confirm('⚠️ ULTIMA CONFERMA: Tutti i tuoi dati saranno eliminati permanentemente. Continuare?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/users/${userId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                alert('Account eliminato con successo');
+                window.location.href = '/logout';
+            } else {
+                alert('Errore nell\'eliminazione dell\'account');
+            }
+        } catch (err) {
+            alert('Errore di connessione');
+        }
+    }
+</script>
+{% endblock %}
