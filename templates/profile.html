@@ -184,13 +184,16 @@
         }
         
         bookings.forEach(b => {
+            console.log(b); 
             const el = document.createElement('div');
             el.className = 'border rounded p-2 mb-2';
             
             el.innerHTML = `
             <strong>${b.booking_date}</strong><br>
-            🕒 ${b.start_time.slice(0,5)} – ${b.end_time.slice(0,5)}<br>
+            🕒 ${b.start_time.slice(0,5)} <br>
             📄 ${b.title}
+            ⛳ Gioco: ${b.game}<br>
+            📄 Descrizione: ${b.description || '-'}
         `;
             
             container.appendChild(el);

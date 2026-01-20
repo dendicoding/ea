@@ -309,6 +309,7 @@ def bookings():
         end_time = data.get('end_time')
         title = data.get('title')
         description = data.get('description')
+        game = data.get('game')
         
         if not booking_date or not start_time or not title:
             return jsonify({'error': 'Data, ora inizio e titolo sono richiesti'}), 400
@@ -318,7 +319,7 @@ def bookings():
             return jsonify({'error': 'Questo slot è già occupato'}), 409
         
         # Crea prenotazione
-        booking = db.create_booking(user_id, booking_date, start_time, end_time, title, description)
+        booking = db.create_booking(user_id, booking_date, start_time, end_time, title, game, description)
         if booking:
             # Serializza le date per JSON
             if booking.get('booking_date'):

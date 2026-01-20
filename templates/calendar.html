@@ -4,589 +4,636 @@
 
 {% block extra_css %}
 <style>
-        .calendar-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px 10px 0 0;
-        }
-        
-        .calendar-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .view-selector {
-            background: #f8f9fa;
-            padding: 15px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 1px;
-            background: #dee2e6;
-            border: 1px solid #dee2e6;
-        }
-        
-        .calendar-day-header {
-            background: #e9ecef;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        
-        .calendar-day {
-            background: white;
-            min-height: 100px;
-            padding: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-        
-        .calendar-day:hover {
-            background: #f8f9fa;
-            transform: scale(1.02);
-        }
-        
-        .calendar-day.other-month {
-            background: #f8f9fa;
-            color: #adb5bd;
-        }
-        
-        .calendar-day.today {
-            background: #e7f3ff;
-            border: 2px solid #667eea;
-        }
-        
-        .calendar-day.selected {
-            background: #667eea;
-            color: white;
-        }
-        
-        .day-number {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .event-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 2px;
-        }
-        
-        .event-item {
-            background: #667eea;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 0.75em;
-            margin: 2px 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .week-view-container,
-        .day-view-container {
-            display: none;
-        }
-        
-        .time-slot {
-            border-bottom: 1px solid #e9ecef;
-            padding: 10px;
-            min-height: 60px;
-        }
-        
-        .hour-label {
-            font-weight: bold;
-            color: #6c757d;
-            width: 60px;
-        }
-        
-        .week-day-column {
-            flex: 1;
-            border-right: 1px solid #e9ecef;
-            padding: 10px;
-        }
-        
-        .week-day-header {
-            background: #667eea;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-    </style>
+    .calendar-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .calendar-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .view-selector {
+        background: #f8f9fa;
+        padding: 15px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background: #dee2e6;
+        border: 1px solid #dee2e6;
+    }
+    
+    .calendar-day-header {
+        background: #e9ecef;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+    
+    .calendar-day {
+        background: white;
+        min-height: 100px;
+        padding: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+    
+    .calendar-day:hover {
+        background: #f8f9fa;
+        transform: scale(1.02);
+    }
+    
+    .calendar-day.other-month {
+        background: #f8f9fa;
+        color: #adb5bd;
+    }
+    
+    .calendar-day.today {
+        background: #e7f3ff;
+        border: 2px solid #667eea;
+    }
+    
+    .calendar-day.selected {
+        background: #667eea;
+        color: white;
+    }
+    
+    .day-number {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .event-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 2px;
+    }
+    
+    .event-item {
+        background: #667eea;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.75em;
+        margin: 2px 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .week-view-container,
+    .day-view-container {
+        display: none;
+    }
+    
+    .time-slot {
+        border-bottom: 1px solid #e9ecef;
+        padding: 10px;
+        min-height: 60px;
+    }
+    
+    .hour-label {
+        font-weight: bold;
+        color: #6c757d;
+        width: 60px;
+    }
+    
+    .week-day-column {
+        flex: 1;
+        border-right: 1px solid #e9ecef;
+        padding: 10px;
+    }
+    
+    .week-day-header {
+        background: #667eea;
+        color: white;
+        padding: 10px;
+        text-align: center;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+    
+    .past-day {
+        background-color: #e9ecef; /* grigio chiaro */
+        color: #6c757d; /* testo leggermente scuro */
+    }
+    
+</style>
 {% endblock %}
 
 {% block content %}
 
 <div class="container mb-5 mt-4">
-        <div class="calendar-container">
-            <!-- Header -->
-            <div class="calendar-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <button class="btn btn-light" id="prevBtn">← Previous</button>
-                    <h2 id="currentMonth" class="mb-0"></h2>
-                    <button class="btn btn-light" id="nextBtn">Next →</button>
-                </div>
-            </div>
-
-            <!-- View Selector -->
-            <div class="view-selector">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-primary active" id="monthViewBtn">Month</button>
-                        <button class="btn btn-outline-primary" id="weekViewBtn">Week</button>
-                        <button class="btn btn-outline-primary" id="dayViewBtn">Day</button>
-                    </div>
-                    <button class="btn btn-success" id="todayBtn">Today</button>
-                </div>
-            </div>
-
-            <!-- Month View -->
-            <div id="monthView" class="p-3">
-                <div class="calendar-grid">
-                    <div class="calendar-day-header">Sun</div>
-                    <div class="calendar-day-header">Mon</div>
-                    <div class="calendar-day-header">Tue</div>
-                    <div class="calendar-day-header">Wed</div>
-                    <div class="calendar-day-header">Thu</div>
-                    <div class="calendar-day-header">Fri</div>
-                    <div class="calendar-day-header">Sat</div>
-                    <!-- Days will be inserted here -->
-                </div>
-            </div>
-
-            <!-- Week View -->
-            <div id="weekView" class="week-view-container p-3">
-                <div id="weekContainer"></div>
-            </div>
-
-            <!-- Day View -->
-            <div id="dayView" class="day-view-container p-3">
-                <div id="dayContainer"></div>
+    <div class="calendar-container">
+        <!-- Header -->
+        <div class="calendar-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <button class="btn btn-light" id="prevBtn">← Previous</button>
+                <h2 id="currentMonth" class="mb-0"></h2>
+                <button class="btn btn-light" id="nextBtn">Next →</button>
             </div>
         </div>
-
-        <!-- Event Modal -->
-        <div class="modal fade" id="eventModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add Event</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="eventForm">
-                            <input type="hidden" id="eventDate">
-                            <div class="mb-3">
-                                <label for="eventTitle" class="form-label">Titolo Prenotazione</label>
-                                <input type="text" class="form-control" id="eventTitle" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="eventTime" class="form-label">Ora Inizio (Slot di 1 ora)</label>
-                                <select class="form-control" id="eventTime" required>
-                                    <option value="">Seleziona un orario...</option>
-                                </select>
-                                <small id="slotStatus" class="form-text"></small>
-                            </div>
-                            <div class="mb-3">
-                                <label for="eventDescription" class="form-label">Descrizione</label>
-                                <textarea class="form-control" id="eventDescription" rows="3"></textarea>
-                            </div>
-                            <div id="bookingMessage"></div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                        <button type="button" class="btn btn-primary" id="saveEventBtn">Prenota Slot</button>
-                    </div>
+        
+        <!-- View Selector -->
+        <div class="view-selector">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-primary active" id="monthViewBtn">Month</button>
+                    <button class="btn btn-outline-primary" id="weekViewBtn">Week</button>
+                    <button class="btn btn-outline-primary" id="dayViewBtn">Day</button>
+                </div>
+                <button class="btn btn-success" id="todayBtn">Today</button>
+            </div>
+        </div>
+        
+        <!-- Month View -->
+        <div id="monthView" class="p-3">
+            <div class="calendar-grid">
+                <div class="calendar-day-header">Sun</div>
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+                <!-- Days will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Week View -->
+        <div id="weekView" class="week-view-container p-3">
+            <div id="weekContainer"></div>
+        </div>
+        
+        <!-- Day View -->
+        <div id="dayView" class="day-view-container p-3">
+            <div id="dayContainer"></div>
+        </div>
+    </div>
+    
+    <!-- Event Modal -->
+    <div class="modal fade" id="eventModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Event</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="eventForm">
+                        <input type="hidden" id="eventDate">
+                        <div class="mb-3">
+                            <label for="eventTitle" class="form-label">Titolo Prenotazione</label>
+                            <input type="text" class="form-control" id="eventTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventTime" class="form-label">Ora Inizio (Slot di 1 ora)</label>
+                            <select class="form-control" id="eventTime" required>
+                                <option value="">Seleziona un orario...</option>
+                            </select>
+                            <small id="slotStatus" class="form-text"></small>
+                        </div>
+                        
+                        <div class="mb-3" id="gameTypeContainer" style="display: none;">
+                            <label for="gameType" class="form-label">
+                                Tipo di gioco
+                            </label>
+                            <select class="form-control" id="gameType" required>
+                                <option value="">Seleziona il tipo di gioco...</option>
+                                <option value="18">18 buche</option>
+                                <option value="18_pg">18 buche + Pitching Green</option>
+                                <option value="9">9 buche</option>
+                                <option value="9_pg">9 buche + Pitching Green</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDescription" class="form-label">Descrizione</label>
+                            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+                        </div>
+                        <div id="bookingMessage"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                    <button type="button" class="btn btn-primary" id="saveEventBtn">Prenota Slot</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let currentDate = new Date();
-        let currentView = 'month';
-        let bookings = [];
-        let currentUserId = null;
-
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                           'July', 'August', 'September', 'October', 'November', 'December'];
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-        // Carica utente corrente e prenotazioni
-        loadCurrentUser();
-        loadBookings();
-
-        // Initialize
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentDate = new Date();
+    let currentView = 'month';
+    let bookings = [];
+    let currentUserId = null;
+    
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    // Carica utente corrente e prenotazioni
+    loadCurrentUser();
+    loadBookings();
+    
+    // Initialize
+    renderCalendar();
+    
+    async function loadCurrentUser() {
+        try {
+            const response = await fetch('/current-user');
+            if (response.ok) {
+                const user = await response.json();
+                currentUserId = user.id;
+            }
+        } catch (err) {
+            console.error('Errore caricamento utente:', err);
+        }
+    }
+    
+    async function loadBookings() {
+        try {
+            const response = await fetch('/bookings');
+            bookings = await response.json();
+            renderCalendar();
+        } catch (err) {
+            console.error('Errore caricamento prenotazioni:', err);
+        }
+    }
+    
+    // Event Listeners
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        if (currentView === 'month') {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+        } else if (currentView === 'week') {
+            currentDate.setDate(currentDate.getDate() - 7);
+        } else {
+            currentDate.setDate(currentDate.getDate() - 1);
+        }
         renderCalendar();
-
-        async function loadCurrentUser() {
-            try {
-                const response = await fetch('/current-user');
-                if (response.ok) {
-                    const user = await response.json();
-                    currentUserId = user.id;
+    });
+    
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        if (currentView === 'month') {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+        } else if (currentView === 'week') {
+            currentDate.setDate(currentDate.getDate() + 7);
+        } else {
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        renderCalendar();
+    });
+    
+    document.getElementById('todayBtn').addEventListener('click', () => {
+        currentDate = new Date();
+        renderCalendar();
+    });
+    
+    document.getElementById('monthViewBtn').addEventListener('click', () => {
+        switchView('month');
+    });
+    
+    document.getElementById('weekViewBtn').addEventListener('click', () => {
+        switchView('week');
+    });
+    
+    document.getElementById('dayViewBtn').addEventListener('click', () => {
+        switchView('day');
+    });
+    
+    document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
+    
+    function switchView(view) {
+        currentView = view;
+        document.querySelectorAll('.btn-group button').forEach(btn => {
+            btn.classList.remove('btn-primary', 'active');
+            btn.classList.add('btn-outline-primary');
+        });
+        
+        if (view === 'month') {
+            document.getElementById('monthViewBtn').classList.add('btn-primary', 'active');
+            document.getElementById('monthViewBtn').classList.remove('btn-outline-primary');
+        } else if (view === 'week') {
+            document.getElementById('weekViewBtn').classList.add('btn-primary', 'active');
+            document.getElementById('weekViewBtn').classList.remove('btn-outline-primary');
+        } else {
+            document.getElementById('dayViewBtn').classList.add('btn-primary', 'active');
+            document.getElementById('dayViewBtn').classList.remove('btn-outline-primary');
+        }
+        
+        renderCalendar();
+    }
+    
+    function renderCalendar() {
+        if (currentView === 'month') {
+            renderMonthView();
+        } else if (currentView === 'week') {
+            renderWeekView();
+        } else {
+            renderDayView();
+        }
+    }
+    
+    function renderMonthView() {
+        document.getElementById('monthView').style.display = 'block';
+        document.getElementById('weekView').style.display = 'none';
+        document.getElementById('dayView').style.display = 'none';
+        
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        
+        const grid = document.querySelector('.calendar-grid');
+        // Remove old days
+        while (grid.children.length > 7) {
+            grid.removeChild(grid.lastChild);
+        }
+        
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+        
+        // Previous month days
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const day = daysInPrevMonth - i;
+            const dayEl = createDayElement(day, true, year, month - 1);
+            grid.appendChild(dayEl);
+        }
+        
+        // Current month days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = isCurrentMonth && today.getDate() === day;
+            const dayEl = createDayElement(day, false, year, month, isToday);
+            grid.appendChild(dayEl);
+        }
+        
+        // Next month days
+        const remainingCells = 42 - (firstDay + daysInMonth);
+        for (let day = 1; day <= remainingCells; day++) {
+            const dayEl = createDayElement(day, true, year, month + 1);
+            grid.appendChild(dayEl);
+        }
+    }
+    
+    function createDayElement(day, otherMonth, year, month, isToday = false) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        if (otherMonth) dayEl.classList.add('other-month');
+        if (isToday) dayEl.classList.add('today');
+        
+        // Logica sbiadimento giorni passati
+        
+        const today = new Date();
+        const cellDate = new Date(year, month, day);
+        
+        if (cellDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+            dayEl.classList.add('past-day');
+        }
+        
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        dayEl.innerHTML = `<div class="day-number">${day}</div>`;
+        
+        // Mostra prenotazioni per questo giorno
+        const dayBookings = bookings.filter(b => b.booking_date === dateStr);
+        if (dayBookings.length > 0) {
+            dayBookings.forEach(booking => {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'event-item';
+                const isMyBooking = booking.user_id === currentUserId;
+                if (isMyBooking) {
+                    eventEl.style.background = '#28a745'; // Verde per le mie prenotazioni
+                } else {
+                    eventEl.style.background = '#dc3545'; // Rosso per prenotazioni altri utenti
                 }
-            } catch (err) {
-                console.error('Errore caricamento utente:', err);
-            }
-        }
-
-        async function loadBookings() {
-            try {
-                const response = await fetch('/bookings');
-                bookings = await response.json();
-                renderCalendar();
-            } catch (err) {
-                console.error('Errore caricamento prenotazioni:', err);
-            }
-        }
-
-        // Event Listeners
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            if (currentView === 'month') {
-                currentDate.setMonth(currentDate.getMonth() - 1);
-            } else if (currentView === 'week') {
-                currentDate.setDate(currentDate.getDate() - 7);
-            } else {
-                currentDate.setDate(currentDate.getDate() - 1);
-            }
-            renderCalendar();
-        });
-
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            if (currentView === 'month') {
-                currentDate.setMonth(currentDate.getMonth() + 1);
-            } else if (currentView === 'week') {
-                currentDate.setDate(currentDate.getDate() + 7);
-            } else {
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-            renderCalendar();
-        });
-
-        document.getElementById('todayBtn').addEventListener('click', () => {
-            currentDate = new Date();
-            renderCalendar();
-        });
-
-        document.getElementById('monthViewBtn').addEventListener('click', () => {
-            switchView('month');
-        });
-
-        document.getElementById('weekViewBtn').addEventListener('click', () => {
-            switchView('week');
-        });
-
-        document.getElementById('dayViewBtn').addEventListener('click', () => {
-            switchView('day');
-        });
-
-        document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
-
-        function switchView(view) {
-            currentView = view;
-            document.querySelectorAll('.btn-group button').forEach(btn => {
-                btn.classList.remove('btn-primary', 'active');
-                btn.classList.add('btn-outline-primary');
+                eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}${isMyBooking ? ' (Tu)' : ''}`;
+                eventEl.title = booking.title;
+                dayEl.appendChild(eventEl);
             });
-            
-            if (view === 'month') {
-                document.getElementById('monthViewBtn').classList.add('btn-primary', 'active');
-                document.getElementById('monthViewBtn').classList.remove('btn-outline-primary');
-            } else if (view === 'week') {
-                document.getElementById('weekViewBtn').classList.add('btn-primary', 'active');
-                document.getElementById('weekViewBtn').classList.remove('btn-outline-primary');
-            } else {
-                document.getElementById('dayViewBtn').classList.add('btn-primary', 'active');
-                document.getElementById('dayViewBtn').classList.remove('btn-outline-primary');
-            }
-            
-            renderCalendar();
         }
-
-        function renderCalendar() {
-            if (currentView === 'month') {
-                renderMonthView();
-            } else if (currentView === 'week') {
-                renderWeekView();
-            } else {
-                renderDayView();
-            }
-        }
-
-        function renderMonthView() {
-            document.getElementById('monthView').style.display = 'block';
-            document.getElementById('weekView').style.display = 'none';
-            document.getElementById('dayView').style.display = 'none';
-
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
+        
+        dayEl.addEventListener('click', () => openEventModal(dateStr));
+        
+        return dayEl;
+    }
+    
+    function renderWeekView() {
+        document.getElementById('monthView').style.display = 'none';
+        document.getElementById('weekView').style.display = 'block';
+        document.getElementById('dayView').style.display = 'none';
+        
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        
+        document.getElementById('currentMonth').textContent = 
+        `Week of ${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getDate()} - ${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${startOfWeek.getFullYear()}`;
+        
+        const container = document.getElementById('weekContainer');
+        container.innerHTML = '<div class="d-flex" style="overflow-x: auto;"></div>';
+        const weekGrid = container.firstChild;
+        
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(startOfWeek);
+            day.setDate(startOfWeek.getDate() + i);
             
-            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
-
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const daysInPrevMonth = new Date(year, month, 0).getDate();
-
-            const grid = document.querySelector('.calendar-grid');
-            // Remove old days
-            while (grid.children.length > 7) {
-                grid.removeChild(grid.lastChild);
-            }
-
-            const today = new Date();
-            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-
-            // Previous month days
-            for (let i = firstDay - 1; i >= 0; i--) {
-                const day = daysInPrevMonth - i;
-                const dayEl = createDayElement(day, true, year, month - 1);
-                grid.appendChild(dayEl);
-            }
-
-            // Current month days
-            for (let day = 1; day <= daysInMonth; day++) {
-                const isToday = isCurrentMonth && today.getDate() === day;
-                const dayEl = createDayElement(day, false, year, month, isToday);
-                grid.appendChild(dayEl);
-            }
-
-            // Next month days
-            const remainingCells = 42 - (firstDay + daysInMonth);
-            for (let day = 1; day <= remainingCells; day++) {
-                const dayEl = createDayElement(day, true, year, month + 1);
-                grid.appendChild(dayEl);
-            }
-        }
-
-        function createDayElement(day, otherMonth, year, month, isToday = false) {
-            const dayEl = document.createElement('div');
-            dayEl.className = 'calendar-day';
-            if (otherMonth) dayEl.classList.add('other-month');
-            if (isToday) dayEl.classList.add('today');
-
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayCol = document.createElement('div');
+            dayCol.className = 'week-day-column';
             
-            dayEl.innerHTML = `<div class="day-number">${day}</div>`;
+            const dateStr = day.toISOString().split('T')[0];
+            const isToday = dateStr === new Date().toISOString().split('T')[0];
             
-            // Mostra prenotazioni per questo giorno
-            const dayBookings = bookings.filter(b => b.booking_date === dateStr);
-            if (dayBookings.length > 0) {
-                dayBookings.forEach(booking => {
-                    const eventEl = document.createElement('div');
-                    eventEl.className = 'event-item';
-                    const isMyBooking = booking.user_id === currentUserId;
-                    if (isMyBooking) {
-                        eventEl.style.background = '#28a745'; // Verde per le mie prenotazioni
-                    } else {
-                        eventEl.style.background = '#dc3545'; // Rosso per prenotazioni altri utenti
-                    }
-                    eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}${isMyBooking ? ' (Tu)' : ''}`;
-                    eventEl.title = booking.title;
-                    dayEl.appendChild(eventEl);
-                });
-            }
-
-            dayEl.addEventListener('click', () => openEventModal(dateStr));
-
-            return dayEl;
-        }
-
-        function renderWeekView() {
-            document.getElementById('monthView').style.display = 'none';
-            document.getElementById('weekView').style.display = 'block';
-            document.getElementById('dayView').style.display = 'none';
-
-            const startOfWeek = new Date(currentDate);
-            startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-            document.getElementById('currentMonth').textContent = 
-                `Week of ${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getDate()} - ${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${startOfWeek.getFullYear()}`;
-
-            const container = document.getElementById('weekContainer');
-            container.innerHTML = '<div class="d-flex" style="overflow-x: auto;"></div>';
-            const weekGrid = container.firstChild;
-
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(startOfWeek);
-                day.setDate(startOfWeek.getDate() + i);
-                
-                const dayCol = document.createElement('div');
-                dayCol.className = 'week-day-column';
-                
-                const dateStr = day.toISOString().split('T')[0];
-                const isToday = dateStr === new Date().toISOString().split('T')[0];
-                
-                dayCol.innerHTML = `
+            dayCol.innerHTML = `
                     <div class="week-day-header ${isToday ? 'bg-success' : ''}">
                         ${dayNames[day.getDay()]}<br>
                         ${day.getDate()}
                     </div>
                 `;
-
-                const dayBookings = bookings.filter(b => b.booking_date === dateStr);
-                if (dayBookings.length > 0) {
-                    dayBookings.forEach(booking => {
-                        const eventEl = document.createElement('div');
-                        eventEl.className = 'event-item mb-2';
-                        const isMyBooking = booking.user_id === currentUserId;
-                        if (isMyBooking) {
-                            eventEl.style.background = '#28a745';
-                        } else {
-                            eventEl.style.background = '#dc3545';
-                        }
-                        eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}${isMyBooking ? ' (Tu)' : ''}`;
-                        dayCol.appendChild(eventEl);
-                    });
-                }
-
-                dayCol.addEventListener('click', () => openEventModal(dateStr));
-                weekGrid.appendChild(dayCol);
-            }
-        }
-
-        function renderDayView() {
-            document.getElementById('monthView').style.display = 'none';
-            document.getElementById('weekView').style.display = 'none';
-            document.getElementById('dayView').style.display = 'block';
-
-            document.getElementById('currentMonth').textContent = 
-                `${dayNames[currentDate.getDay()]}, ${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`;
-
-            const dateStr = currentDate.toISOString().split('T')[0];
-            const container = document.getElementById('dayContainer');
-            container.innerHTML = '';
-
-            for (let hour = 0; hour < 24; hour++) {
-                const timeSlot = document.createElement('div');
-                timeSlot.className = 'time-slot d-flex';
-                
-                const hourStr = `${String(hour).padStart(2, '0')}:00`;
-                timeSlot.innerHTML = `
-                    <div class="hour-label">${hourStr}</div>
-                    <div class="flex-grow-1" id="slot-${hour}"></div>
-                `;
-
-                container.appendChild(timeSlot);
-            }
-
+            
             const dayBookings = bookings.filter(b => b.booking_date === dateStr);
-            dayBookings.forEach(booking => {
-                const hour = parseInt(booking.start_time.split(':')[0]);
-                const slot = document.getElementById(`slot-${hour}`);
-                if (slot) {
+            if (dayBookings.length > 0) {
+                dayBookings.forEach(booking => {
                     const eventEl = document.createElement('div');
-                    eventEl.className = 'event-item';
+                    eventEl.className = 'event-item mb-2';
                     const isMyBooking = booking.user_id === currentUserId;
                     if (isMyBooking) {
                         eventEl.style.background = '#28a745';
                     } else {
                         eventEl.style.background = '#dc3545';
                     }
-                    eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}: ${booking.title}${isMyBooking ? ' (Tu)' : ''}`;
-                    slot.appendChild(eventEl);
-                }
-            });
-        }
-
-        function openEventModal(dateStr) {
-            document.getElementById('eventDate').value = dateStr;
-            document.getElementById('bookingMessage').innerHTML = '';
-            
-            // Popola gli slot orari (24 ore)
-            const timeSelect = document.getElementById('eventTime');
-            timeSelect.innerHTML = '<option value="">Seleziona un orario...</option>';
-            
-            const dayBookings = bookings.filter(b => b.booking_date === dateStr);
-            const occupiedSlots = new Set(dayBookings.map(b => b.start_time.slice(0,5)));
-            
-            for (let hour = 0; hour < 24; hour++) {
-                const hourStr = String(hour).padStart(2, '0') + ':00';
-                const option = document.createElement('option');
-                option.value = hourStr;
-                
-                if (occupiedSlots.has(hourStr)) {
-                    const booking = dayBookings.find(b => b.start_time.slice(0,5) === hourStr);
-                    option.text = `${hourStr} - OCCUPATO (${booking.username})`;
-                    option.disabled = true;
-                    option.style.color = '#dc3545';
-                } else {
-                    option.text = `${hourStr} - DISPONIBILE`;
-                    option.style.color = '#28a745';
-                }
-                
-                timeSelect.appendChild(option);
-            }
-            
-            const modal = new bootstrap.Modal(document.getElementById('eventModal'));
-            modal.show();
-        }
-
-        async function saveEvent() {
-            const dateStr = document.getElementById('eventDate').value;
-            const title = document.getElementById('eventTitle').value;
-            const startTime = document.getElementById('eventTime').value;
-            const description = document.getElementById('eventDescription').value;
-            const messageDiv = document.getElementById('bookingMessage');
-
-            if (!title || !startTime) {
-                messageDiv.innerHTML = '<div class="alert alert-danger">Titolo e orario sono richiesti</div>';
-                return;
-            }
-
-            try {
-                const response = await fetch('/bookings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        booking_date: dateStr,
-                        start_time: startTime,
-                        end_time: addHour(startTime),
-                        title: title,
-                        description: description
-                    })
+                    eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}${isMyBooking ? ' (Tu)' : ''}`;
+                    dayCol.appendChild(eventEl);
                 });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    messageDiv.innerHTML = '<div class="alert alert-success">✅ Prenotazione effettuata!</div>';
-                    document.getElementById('eventForm').reset();
-                    
-                    setTimeout(async () => {
-                        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-                        await loadBookings();
-                    }, 1500);
-                } else {
-                    messageDiv.innerHTML = `<div class="alert alert-danger">❌ ${data.error}</div>`;
-                }
-            } catch (err) {
-                messageDiv.innerHTML = '<div class="alert alert-danger">❌ Errore di connessione</div>';
             }
+            
+            dayCol.addEventListener('click', () => openEventModal(dateStr));
+            weekGrid.appendChild(dayCol);
+        }
+    }
+    
+    function renderDayView() {
+        document.getElementById('monthView').style.display = 'none';
+        document.getElementById('weekView').style.display = 'none';
+        document.getElementById('dayView').style.display = 'block';
+        
+        document.getElementById('currentMonth').textContent = 
+        `${dayNames[currentDate.getDay()]}, ${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`;
+        
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const container = document.getElementById('dayContainer');
+        container.innerHTML = '';
+        
+        for (let hour = 0; hour < 24; hour++) {
+            const timeSlot = document.createElement('div');
+            timeSlot.className = 'time-slot d-flex';
+            
+            const hourStr = `${String(hour).padStart(2, '0')}:00`;
+            timeSlot.innerHTML = `
+                    <div class="hour-label">${hourStr}</div>
+                    <div class="flex-grow-1" id="slot-${hour}"></div>
+                `;
+            
+            container.appendChild(timeSlot);
         }
         
-        function addHour(timeStr) {
-            const [hour, minute] = timeStr.split(':');
-            const newHour = (parseInt(hour) + 1) % 24;
-            return `${String(newHour).padStart(2, '0')}:${minute}`;
+        const dayBookings = bookings.filter(b => b.booking_date === dateStr);
+        dayBookings.forEach(booking => {
+            const hour = parseInt(booking.start_time.split(':')[0]);
+            const slot = document.getElementById(`slot-${hour}`);
+            if (slot) {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'event-item';
+                const isMyBooking = booking.user_id === currentUserId;
+                if (isMyBooking) {
+                    eventEl.style.background = '#28a745';
+                } else {
+                    eventEl.style.background = '#dc3545';
+                }
+                eventEl.textContent = `${booking.start_time.slice(0,5)} - ${booking.username}: ${booking.title}${isMyBooking ? ' (Tu)' : ''}`;
+                slot.appendChild(eventEl);
+            }
+        });
+    }
+    
+    function openEventModal(dateStr) {
+        document.getElementById('eventDate').value = dateStr;
+        document.getElementById('bookingMessage').innerHTML = '';
+        
+        const gameTypeContainer = document.getElementById("gameTypeContainer");
+        const gameType = document.getElementById("gameType");
+        
+        gameTypeContainer.style.display = "none";
+        gameType.value = "";
+        
+        // Popola gli slot orari (24 ore)
+        const timeSelect = document.getElementById('eventTime');
+        timeSelect.innerHTML = '<option value="">Seleziona un orario...</option>';
+        
+        const dayBookings = bookings.filter(b => b.booking_date === dateStr);
+        const occupiedSlots = new Set(dayBookings.map(b => b.start_time.slice(0,5)));
+        
+        for (let hour = 7; hour < 17 + 1; hour++) {
+            const hourStr = String(hour).padStart(2, '0') + ':00';
+            const option = document.createElement('option');
+            option.value = hourStr;
+            
+            if (occupiedSlots.has(hourStr)) {
+                const booking = dayBookings.find(b => b.start_time.slice(0,5) === hourStr);
+                option.text = `${hourStr} - OCCUPATO (${booking.username})`;
+                option.disabled = true;
+                option.style.color = '#dc3545';
+            } else {
+                option.text = `${hourStr} - DISPONIBILE`;
+                option.style.color = '#28a745';
+            }
+            
+            timeSelect.appendChild(option);
         }
-    </script>
+        
+        const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+        modal.show();
+    }
+    
+    async function saveEvent() {
+        const dateStr = document.getElementById('eventDate').value;
+        const title = document.getElementById('eventTitle').value;
+        const startTime = document.getElementById('eventTime').value;
+        const description = document.getElementById('eventDescription').value;
+        const messageDiv = document.getElementById('bookingMessage');
+        const eventTime = document.getElementById("eventTime")
+        const gameTypeContainer = document.getElementById("gameTypeContainer");
+        const gameType = document.getElementById("gameType").value;
+        
+        if (!title || !startTime) {
+            messageDiv.innerHTML = '<div class="alert alert-danger">Titolo e orario sono richiesti</div>';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/bookings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    booking_date: dateStr,
+                    start_time: startTime,
+                    end_time: addHour(startTime),
+                    title: title,
+                    game: gameType,
+                    description: description
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                messageDiv.innerHTML = '<div class="alert alert-success">✅ Prenotazione effettuata!</div>';
+                document.getElementById('eventForm').reset();
+                
+                setTimeout(async () => {
+                    bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+                    await loadBookings();
+                }, 1500);
+            } else {
+                messageDiv.innerHTML = `<div class="alert alert-danger">❌ ${data.error}</div>`;
+            }
+        } catch (err) {
+            messageDiv.innerHTML = '<div class="alert alert-danger">❌ Errore di connessione</div>';
+        }
+    }
+    
+    function addHour(timeStr) {
+        const [hour, minute] = timeStr.split(':');
+        const newHour = (parseInt(hour) + 1) % 24;
+        return `${String(newHour).padStart(2, '0')}:${minute}`;
+    }
+    
+    eventTime.addEventListener("change", () => {
+        if (eventTime.value !== "") {
+            gameTypeContainer.style.display = "block";
+        } else {
+            gameTypeContainer.style.display = "none";
+            gameType.value = "";
+        }
+    })
+</script>
 {% endblock %}
