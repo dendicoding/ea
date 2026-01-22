@@ -86,14 +86,6 @@
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-md-4">
-                        <div class="card border-primary">
-                            <div class="card-body">
-                                <h2 id="totalPosts" class="text-primary">0</h2>
-                                <p class="text-muted mb-0">Posts Creati</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
                         <div class="card border-success">
                             <div class="card-body">
                                 <h2 id="totalEvents" class="text-success">0</h2>
@@ -157,7 +149,7 @@
             const bookings = await res.json();
             
             const myBookings = bookings
-            .filter(b => b.user_id === userId)
+            .filter(b => b.user_id == userId)
             .sort((a, b) => {
                 const d1 = new Date(`${a.booking_date}T${a.start_time}`);
                 const d2 = new Date(`${b.booking_date}T${b.start_time}`);
@@ -184,19 +176,31 @@
         }
         
         bookings.forEach(b => {
-            console.log(b); 
+            
             const el = document.createElement('div');
             el.className = 'border rounded p-2 mb-2';
             
             el.innerHTML = `
             <strong>${b.booking_date}</strong><br>
             🕒 ${b.start_time.slice(0,5)} <br>
-            📄 ${b.title}
-            ⛳ Gioco: ${b.game}<br>
-            📄 Descrizione: ${b.description || '-'}
+            📄 ${b.title} <br>
+            ⛳ Gioco: <span class="badge bg-success">${b.game}</span> <br>
+            📄 Descrizione: ${b.description || '-'} <br>
+            <button class="btn btn-sm btn-danger mt-2 delete-booking-btn"
+            data-booking-id="${b.id}">
+
+                🗑 Elimina Riservazione
+            </button><br>
         `;
             
             container.appendChild(el);
+            
+            const deleteBtn = el.querySelector('.delete-booking-btn');
+            
+            deleteBtn.addEventListener('click', () => {
+                const bookingId = deleteBtn.dataset.bookingId.trim();
+                deleteBooking(bookingId);
+            });
         });
     }
     
@@ -305,6 +309,36 @@
             } else {
                 alert('Errore nell\'eliminazione dell\'account');
             }
+        } catch (err) {
+            alert('Errore di connessione');
+        }
+    }
+    
+    async function deleteBooking(bookingId) {
+        
+        bookingId = bookingId.trim();
+        
+        if (!/^\d+$/.test(bookingId)) {
+            alert('ID prenotazione non valido');
+            return;
+        }
+        
+        if (!confirm('Sei sicuro di voler eliminare questa prenotazione?')) return;
+        
+        try {
+            const response = await fetch(`/bookings/${bookingId}`, {
+                method: 'DELETE'
+            })
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert('Prenotazione eliminata');
+                loadMyBookings(); // ricarica calendario + area personale
+            } else {
+                alert(data.error || 'Errore eliminazione');
+            }
+            
         } catch (err) {
             alert('Errore di connessione');
         }
