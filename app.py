@@ -68,21 +68,32 @@ def signup():
     if not username or not email or not password:
         return jsonify({'error': 'Username, email e password sono richieste!'}), 400
 
-    # Controllo se l'utente già esiste
+    # Controllo se l'username già esiste
     existing_user = db.get_user_by_username(username)
     if existing_user:
-        return jsonify({'error': 'Username già esistente'}), 400
+        return jsonify({'error': 'Username già in uso'}), 400
+    
+    # Controllo se l'email già esiste
+    existing_email = db.get_user_by_email(email)
+    if existing_email:
+        return jsonify({'error': 'Questa email è già registrata'}), 400
     
     # Hash della password
     password_hash = generate_password_hash(password)
 
     # Crea utente
-    user = db.create_user_with_password(username, email, password_hash)
-    if user:
-        session['user_id'] = user['id']
+    result = db.create_user_with_password(username, email, password_hash)
+    
+    # Gestisce gli errori dal database
+    if result and 'error' in result:
+        error_msg = result.get('message', 'Errore nella registrazione')
+        return jsonify({'error': error_msg}), 400
+    
+    if result:
+        session['user_id'] = result['id']
         return jsonify({
             'message' : 'registrazione riuscita',
-            'user' : {'id': user['id'], 'username': user['username'], 'email': user['email']}  
+            'user' : {'id': result['id'], 'username': result['username'], 'email': result['email']}  
         }), 201
     return jsonify({'error' : 'Errore nella registrazione'}), 500
 
