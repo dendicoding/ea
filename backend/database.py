@@ -1,6 +1,7 @@
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2 import errorcodes
 import os
 
 
@@ -58,7 +59,7 @@ def init_db():
                     start_time TIME NOT NULL,
                     end_time TIME NOT NULL,
                     title VARCHAR(200) NOT NULL,
-                    game VARCHAR(50)
+                    game VARCHAR(50),
                     description TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(booking_date, start_time)
@@ -111,10 +112,20 @@ def create_user_with_password(username, email, password_hash):
             user = cursor.fetchone()
             conn.commit()
             return dict(user)
+        except psycopg2.errors.UniqueViolation as e:
+            conn.rollback()
+            # Controlla quale campo ha causato l'errore
+            error_message = str(e)
+            if 'users_email_key' in error_message:
+                return {'error': 'email_exists', 'message': 'Questa email è già registrata'}
+            elif 'users_username_key' in error_message:
+                return {'error': 'username_exists', 'message': 'Questo username è già in uso'}
+            else:
+                return {'error': 'duplicate', 'message': 'Username o email già esistenti'}
         except Exception as e:
             print(f"Errore nella creazione utente: {e}")
             conn.rollback()
-            return None
+            return {'error': 'database_error', 'message': 'Errore nella registrazione'}
         finally:
             cursor.close()
             conn.close()
@@ -238,6 +249,23 @@ def get_user_by_username(username):
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            return dict(user) if user else None
+        except Exception as e:
+            print(f"Errore nel recupero dell'utente: {e}")
+            return None
+        finally:
+            cursor.close()
+            conn.close()
+
+
+def get_user_by_email(email):
+    """Ottiene un utente per email"""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
             return dict(user) if user else None
         except Exception as e:
